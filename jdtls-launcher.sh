@@ -41,6 +41,7 @@ function print_help {
     echo '  --update            uninstall and install jdtls creating a backup and restoring in case of failure'
     echo '  --backup            creates a backup of the current jdtls installation'
     echo '  --restore           restores the jdtls backup'
+    echo '  -r | --run          launch jdtls, optionally provide --workspace to set the root of the workspace'
 }
 
 function install_lombok {
@@ -170,6 +171,11 @@ function run {
             ;;
     esac
 
+    workspace="$JDTLS_WORKSPACE"
+    if [ $# -gt 1 ] && [ "$1" = "--workspace" ] && [ "$2" != "" ]; then
+        workspace=$2
+    fi
+
     java \
         -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044 \
         -Declipse.application=org.eclipse.jdt.ls.core.id1 \
@@ -181,7 +187,7 @@ function run {
         -javaagent:"$LOMBOK" \
         -jar "$JDTLS_EQUINOX_LAUNCHER" \
         -configuration "$CONFIG" \
-        -data "$JDTLS_WORKSPACE" \
+        -data "$workspace" \
         --add-modules=ALL-SYSTEM \
         --add-opens java.base/java.util=ALL-UNNAMED \
         --add-opens java.base/java.lang=ALL-UNNAMED
@@ -217,8 +223,9 @@ case "$1" in
         jdtls_reinstall
         exit
         ;;
-    "")
-        run
+    -r|--run)
+        shift
+        run "$@"
         exit
         ;;
     *)
